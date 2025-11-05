@@ -1,0 +1,444 @@
+﻿@page "/"
+@using CapstoneProject2025.Models
+@using CapstoneProject2025.Services
+
+<div class="container">
+    <div class="button-bar">
+        <button class="add-button" @onclick="ShowAddDialog">
+            + Add Product
+        </button>
+
+        <select class="sort-dropdown" @onchange="OnSortChanged">
+            <option value="">Sort By...</option>
+            <option value="NameAZ">Name (A-Z)</option>
+            <option value="NameZA">Name (Z-A)</option>
+            <option value="CategoryAZ">Category (A-Z)</option>
+            <option value="CategoryZA">Category (Z-A)</option>
+            <option value="ExpirationStatus">Expiration Status</option>
+        </select>
+    </div>
+
+    <div class="grid">
+        @foreach (var product in products)
+        {
+            <div class="grid-item">
+                <div class="grid-item-header">
+                    <h3>@product.Name</h3>
+                    <div class="item-actions">
+                        <button class="btn-edit" @onclick="() => ShowEditDialog(product)" title="Edit">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <button class="btn-delete" @onclick="() => DeleteProduct(product)" title="Delete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tag-container">
+                    <span class="tag @product.GetCategoryTag()">@product.Category</span>
+                    @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
+                    {
+                        <span class="tag @product.GetStatusTagClass()">
+                            @product.GetExpirationStatus()
+                        </span>
+                    }
+                </div>
+
+                <p class="date">
+                    @if (product.DateType == DateType.Expiration)
+                    {
+                        <text>Expires: @product.ExpDate.ToShortDateString()</text>
+                    }
+                    else
+                    {
+                        <text>Best before: @product.ExpDate.ToShortDateString()</text>
+                    }
+                </p>
+                <p class="date">Added: @product.DateAdded.ToShortDateString()</p>
+                <p class="date">Last modified: @product.LastModified.ToShortDateString()</p>
+            </div>
+        }
+    </div>
+</div>
+
+
+@* Add/Edit Product Dialog *@
+@if (showDialog)
+{
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <h2>@(isEditing ? "Edit Product" : "Add New Product")</h2>
+
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text"
+                       @bind="currentProduct.Name"
+                       placeholder="Enter product name" />
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select @bind="currentProduct.Category">
+                    <option value="">Select a category</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Meat">Meat</option>
+                    <option value="Poultry">Poultry</option>
+                    <option value="Seafood">Seafood</option>
+                    <option value="Fruit">Fruit</option>
+                    <option value="Vegetable">Vegetable</option>
+                    <option value="Bakery">Bakery</option>
+                    <option value="Grains">Grains</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Condiments">Condiments</option>
+                    <option value="Snacks">Snacks</option>
+                    <option value="Frozen">Frozen</option>
+                    <option value="Deli">Deli</option>
+                    <option value="Canned">Canned</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Date Type</label>
+                <select @bind="currentProduct.DateType">
+                    <option value="Expiration">Expiration Date</option>
+                    <option value="BestBefore">Best Before Date</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Expiration/Best Before Date</label>
+                <input type="date" @bind="currentProduct.ExpDate" />
+            </div>
+
+            <div class="button-group">
+                <button class="btn-cancel" @onclick="CloseDialog">
+                    Cancel
+                </button>
+                <button class="btn-save" @onclick="SaveProduct">
+                    @(isEditing ? "Update Product" : "Add Product")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* Delete Confirmation Dialog *@
+@if (showDeleteConfirm)
+{
+    <div class="modal-overlay" @onclick="CloseDeleteConfirm">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to delete "@productToDelete?.Name"?</p>
+
+            <div class="button-group">
+                <button class="btn-cancel" @onclick="CloseDeleteConfirm">
+                    Cancel
+                </button>
+                <button class="btn-delete-confirm" @onclick="ConfirmDelete">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .container {
+        padding: 16px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .add-button {
+        padding: 8px 16px;
+        border: 1px solid;
+        cursor: pointer;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+    }
+
+    .grid-item {
+        padding: 16px;
+        border: 1px solid;
+    }
+
+    .grid-item-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .item-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        padding: 4px;
+        border: 1px solid;
+        cursor: pointer;
+    }
+
+    .tag-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border: 1px solid;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .category-tag {
+
+    }
+
+    .status-tag {
+
+    }
+
+        .status-tag.expiring-soon {
+
+        }
+
+        .status-tag.expired {
+
+        }
+
+        .status-tag.going-bad {
+
+        }
+
+        .status-tag.bad {
+
+        }
+
+    .date {
+        font-size: 12px;
+        margin: 4px 0;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        padding: 20px;
+        border: 1px solid;
+        width: 90%;
+        max-width: 400px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid;
+        }
+
+    .button-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .btn-cancel,
+    .btn-save,
+    .btn-delete-confirm {
+        padding: 6px 12px;
+        border: 1px solid;
+        cursor: pointer;
+    }
+
+    .button-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .sort-dropdown {
+        padding: 8px;
+        border: 1px solid;
+        cursor: pointer;
+    }
+
+</style>
+
+@code {
+    private List<Product> products = new();
+    private bool showDialog = false;
+    private bool showDeleteConfirm = false;
+    private bool isEditing = false;
+    private Product currentProduct = new Product("", "", DateTime.Now.AddDays(7), DateType.BestBefore);
+    private Product? productToDelete = null;
+
+    [Inject]
+    private IProductService ProductService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ProductService.InitializeAsync();
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        products = await ProductService.GetProductsAsync();
+
+        // If no products exist, add sample data
+        if (products.Count == 0)
+        {
+            var sampleProducts = new List<Product>
+            {
+
+            };
+
+            foreach (var product in sampleProducts)
+            {
+                await ProductService.SaveProductAsync(product);
+            }
+
+            products = await ProductService.GetProductsAsync();
+        }
+
+        StateHasChanged();
+    }
+
+    private void ShowAddDialog()
+    {
+        currentProduct = new Product("", "", DateTime.Now.AddDays(7), DateType.BestBefore);
+        isEditing = false;
+        showDialog = true;
+    }
+
+    private void ShowEditDialog(Product product)
+    {
+        // Create a copy of the product to edit
+        currentProduct = new Product(
+            product.Name,
+            product.Category,
+            product.ExpDate,
+            product.DateType)
+        {
+            ItemId = product.ItemId,
+            DateAdded = product.DateAdded,
+            LastModified = product.LastModified
+        };
+        isEditing = true;
+        showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        showDialog = false;
+        currentProduct = new Product("", "", DateTime.Now.AddDays(7), DateType.BestBefore);
+    }
+
+    private async Task SaveProduct()
+    {
+        if (!string.IsNullOrWhiteSpace(currentProduct.Name) &&
+            !string.IsNullOrWhiteSpace(currentProduct.Category))
+        {
+            await ProductService.SaveProductAsync(currentProduct);
+            await LoadProducts();
+            CloseDialog();
+        }
+    }
+
+    private void DeleteProduct(Product product)
+    {
+        productToDelete = product;
+        showDeleteConfirm = true;
+    }
+
+    private void CloseDeleteConfirm()
+    {
+        showDeleteConfirm = false;
+        productToDelete = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (productToDelete != null)
+        {
+            await ProductService.DeleteProductAsync(productToDelete);
+            await LoadProducts();
+            CloseDeleteConfirm();
+        }
+    }
+
+    private async Task OnSortChanged(ChangeEventArgs e)
+    {
+        var sortOption = e.Value?.ToString();
+
+        switch (sortOption)
+        {
+            case "NameAZ":
+                products = products.OrderBy(p => p.Name).ToList();
+                break;
+            case "NameZA":
+                products = products.OrderByDescending(p => p.Name).ToList();
+                break;
+            case "CategoryAZ":
+                products = products.OrderBy(p => p.Category).ToList();
+                break;
+            case "CategoryZA":
+                products = products.OrderByDescending(p => p.Category).ToList();
+                break;
+            case "ExpirationStatus":
+                products = products.OrderBy(p => GetStatusOrder(p.GetExpirationStatus())).ToList();
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private int GetStatusOrder(string status)
+    {
+        // Defines sorting order for statuses
+        return status switch
+        {
+            "Expired" => 1,
+            "Bad" => 2,
+            "Expiring Soon" => 3,
+            "Going Bad" => 4,
+            _ => 5 // Anything else (e.g., "Good" or blank)
+        };
+    }
+
+}
