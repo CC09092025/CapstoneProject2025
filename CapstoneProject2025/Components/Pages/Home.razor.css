@@ -1,0 +1,140 @@
+.container {
+    padding: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.add-button {
+    padding: 8px 16px;
+    border: 1px solid;
+    cursor: pointer;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.grid-item {
+    padding: 16px;
+    border: 1px solid;
+}
+
+.grid-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.item-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-edit,
+.btn-delete {
+    padding: 4px;
+    border: 1px solid;
+    cursor: pointer;
+}
+
+.tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.category-tag {
+}
+
+.status-tag {
+}
+
+    .status-tag.expiring-soon {
+    }
+
+    .status-tag.expired {
+    }
+
+    .status-tag.going-bad {
+    }
+
+    .status-tag.bad {
+    }
+
+.date {
+    font-size: 12px;
+    margin: 4px 0;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    padding: 20px;
+    border: 1px solid;
+    width: 90%;
+    max-width: 400px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+    .form-group label {
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid;
+    }
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.btn-cancel,
+.btn-save,
+.btn-delete-confirm {
+    padding: 6px 12px;
+    border: 1px solid;
+    cursor: pointer;
+}
+
+.button-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.sort-dropdown {
+    padding: 8px;
+    border: 1px solid;
+    cursor: pointer;
+}
