@@ -1,5 +1,5 @@
-﻿using CapstoneProject2025.Services;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
+using CapstoneProject2025.Services;
 
 namespace CapstoneProject2025
 {
@@ -22,9 +22,10 @@ namespace CapstoneProject2025
             builder.Logging.AddDebug();
 #endif
 
+            // Register services
             builder.Services.AddSingleton<IProductService, ProductService>();
-
-            builder.Services.AddSingleton<MainPage>();
+            builder.Services.AddSingleton<IPinAuthenticationService, PinAuthenticationService>();
+            builder.Services.AddSingleton<IAuthStateProvider, AuthStateProvider>();
 
             return builder.Build();
         }

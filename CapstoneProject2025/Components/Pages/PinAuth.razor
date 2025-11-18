@@ -1,0 +1,158 @@
+﻿@page "/pin-auth"
+@using CapstoneProject2025.Services
+@inject IPinAuthenticationService PinAuthService
+@inject NavigationManager Navigation
+@inject IAuthStateProvider AuthStateProvider
+
+
+<div class="pin-auth-container">
+    <div class="pin-auth-card">
+        <h1>@(isCreatingPin ? "Create PIN" : "Enter PIN")</h1>
+        <p class="subtitle">@(isCreatingPin ? "Set up your 4-digit PIN" : "Enter your 4-digit PIN to continue")</p>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="error-message">@errorMessage</div>
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="success-message">@successMessage</div>
+        }
+
+        <div class="pin-display">
+            @for (int i = 0; i < 4; i++)
+            {
+                <div class="pin-dot @(i < currentPin.Length ? "filled" : "")"></div>
+            }
+        </div>
+
+        @if (isCreatingPin && !isConfirmingPin)
+        {
+            <p class="hint">Choose a memorable 4-digit PIN</p>
+        }
+        else if (isCreatingPin && isConfirmingPin)
+        {
+            <p class="hint">Confirm your PIN</p>
+        }
+
+        <div class="numpad">
+            @for (int i = 1; i <= 9; i++)
+            {
+                var digit = i;
+                <button class="numpad-button" @onclick="() => AddDigit(digit.ToString())">@digit</button>
+            }
+            <button class="numpad-button" @onclick="ClearPin">Clear</button>
+            <button class="numpad-button" @onclick='() => AddDigit("0")'>0</button>
+            <button class="numpad-button" @onclick="DeleteDigit">⌫</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string currentPin = "";
+    private string firstPin = "";
+    private bool isCreatingPin = false;
+    private bool isConfirmingPin = false;
+    private string errorMessage = "";
+    private string successMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        isCreatingPin = !(await PinAuthService.HasPinAsync());
+    }
+
+    private async Task AddDigit(string digit)
+    {
+        if (currentPin.Length < 4)
+        {
+            currentPin += digit;
+
+            if (currentPin.Length == 4)
+            {
+                await Task.Delay(200); // Brief delay for visual feedback
+                await ProcessPin();
+            }
+        }
+    }
+
+    private void DeleteDigit()
+    {
+        if (currentPin.Length > 0)
+        {
+            currentPin = currentPin.Substring(0, currentPin.Length - 1);
+        }
+    }
+
+    private void ClearPin()
+    {
+        currentPin = "";
+        errorMessage = "";
+        successMessage = "";
+    }
+
+    private async Task ProcessPin()
+    {
+        errorMessage = "";
+        successMessage = "";
+
+        if (isCreatingPin)
+        {
+            if (!isConfirmingPin)
+            {
+                // First PIN entry
+                firstPin = currentPin;
+                isConfirmingPin = true;
+                currentPin = "";
+            }
+            else
+            {
+                // Confirming PIN
+                if (currentPin == firstPin)
+                {
+                    var success = await PinAuthService.SetPinAsync(currentPin);
+                    if (success)
+                    {
+                        successMessage = "PIN created successfully!";
+                        await Task.Delay(1000);
+                        Navigation.NavigateTo("/", true);
+                    }
+                    else
+                    {
+                        errorMessage = "Failed to create PIN. Please try again.";
+                        ResetPinCreation();
+                    }
+                }
+                else
+                {
+                    errorMessage = "PINs do not match. Please try again.";
+                    ResetPinCreation();
+                }
+            }
+        }
+else
+{
+    // Validating existing PIN
+    var isValid = await PinAuthService.ValidatePinAsync(currentPin);
+    if (isValid)
+    {
+        AuthStateProvider.IsAuthenticated = true;  // ← REQUIRED
+        successMessage = "Access granted!";
+        await Task.Delay(500);
+        Navigation.NavigateTo("/", true);
+    }
+    else
+    {
+        errorMessage = "Incorrect PIN. Please try again.";
+        currentPin = "";
+    }
+}
+    }
+
+    private void ResetPinCreation()
+    {
+        currentPin = "";
+        firstPin = "";
+        isConfirmingPin = false;
+    }
+}

@@ -1,6 +1,65 @@
-﻿<Router AppAssembly="@typeof(MauiProgram).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿@using CapstoneProject2025.Services
+@inject IPinAuthenticationService PinAuthService
+@inject IAuthStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@implements IDisposable
+
+@if (isLoading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div style="text-align: center; color: white;">
+            <h2>Loading...</h2>
+        </div>
+    </div>
+}
+else if (!AuthStateProvider.IsAuthenticated)
+{
+    <Router AppAssembly="@typeof(Routes).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.EmptyLayout)" />
+        </Found>
+    </Router>
+}
+else
+{
+    <Router AppAssembly="@typeof(Routes).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+        </Found>
+    </Router>
+}
+
+@code {
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthStateProvider.OnAuthStateChanged += StateHasChanged;
+
+        var hasPin = await PinAuthService.HasPinAsync();
+
+        if (!hasPin)
+        {
+            // User must create a PIN, but don't auth them yet
+            AuthStateProvider.IsAuthenticated = false;
+
+            if (!Navigation.Uri.Contains("/pin-auth"))
+                Navigation.NavigateTo("/pin-auth");
+        }
+        else if (!AuthStateProvider.IsAuthenticated)
+        {
+            // User has a PIN but is not authenticated yet
+            if (!Navigation.Uri.Contains("/pin-auth"))
+                Navigation.NavigateTo("/pin-auth");
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+
+    public void Dispose()
+    {
+        AuthStateProvider.OnAuthStateChanged -= StateHasChanged;
+    }
+}
