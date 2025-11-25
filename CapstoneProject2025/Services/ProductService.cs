@@ -8,10 +8,16 @@ namespace CapstoneProject2025.Services
     public class ProductService : IProductService
     {
         private SQLiteAsyncConnection _database;
+        private IPantryNotificationService _notificationService;
 
         public ProductService()
         {
             _database = new SQLiteAsyncConnection(GetDatabasePath(), SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.SharedCache);
+        }
+
+        public void SetNotificationService(IPantryNotificationService notificationService)
+        {
+            _notificationService = notificationService;
         }
 
         private string GetDatabasePath()
@@ -36,10 +42,12 @@ namespace CapstoneProject2025.Services
 
         public async Task<int> SaveProductAsync(Product product)
         {
+            int result;
+
             if (!string.IsNullOrEmpty(product.ItemId) && await GetProductAsync(product.ItemId) != null)
             {
                 // Update existing product
-                return await _database.UpdateAsync(product);
+                result = await _database.UpdateAsync(product);
             }
             else
             {
@@ -47,13 +55,29 @@ namespace CapstoneProject2025.Services
                 if (string.IsNullOrEmpty(product.ItemId))
                     product.ItemId = Guid.NewGuid().ToString();
 
-                return await _database.InsertAsync(product);
+                result = await _database.InsertAsync(product);
             }
+
+            // Trigger notification check after save
+            if (_notificationService != null)
+            {
+                await _notificationService.CheckAndScheduleNotificationsAsync();
+            }
+
+            return result;
         }
 
         public async Task<int> DeleteProductAsync(Product product)
         {
-            return await _database.DeleteAsync(product);
+            var result = await _database.DeleteAsync(product);
+
+            // Trigger notification check after delete
+            if (_notificationService != null)
+            {
+                await _notificationService.CheckAndScheduleNotificationsAsync();
+            }
+
+            return result;
         }
     }
 }

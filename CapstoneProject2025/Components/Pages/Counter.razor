@@ -6,7 +6,7 @@
     <div class="grid">
         @foreach (var product in products)
         {
-            <div class="grid-item">
+            <div class="grid-item @GetHighlightClass(product)">
                 <div class="grid-item-header">
                     <h3>@product.Name</h3>
                 </div>
@@ -120,137 +120,6 @@
     </div>
 }
 
-<style>
-    .container {
-        padding: 16px;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .add-button {
-        padding: 8px 16px;
-        border: 1px solid;
-        cursor: pointer;
-    }
-
-    .grid {
-        display: grid;
-        gap: 16px;
-    }
-
-    .grid-item {
-        padding: 16px;
-        border: 1px solid;
-    }
-
-    .grid-item-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-    }
-
-    .tag-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        margin-bottom: 8px;
-    }
-
-    .tag {
-        display: inline-block;
-        padding: 2px 8px;
-        border: 1px solid;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: 500;
-    }
-
-    .category-tag {
-    }
-
-    .status-tag {
-    }
-
-        .status-tag.expiring-soon {
-        }
-
-        .status-tag.expired {
-        }
-
-        .status-tag.going-bad {
-        }
-
-        .status-tag.bad {
-        }
-
-    .date {
-        font-size: 12px;
-        margin: 4px 0;
-    }
-
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .modal-content {
-        padding: 20px;
-        border: 1px solid;
-        width: 90%;
-        max-width: 400px;
-    }
-
-    .form-group {
-        margin-bottom: 16px;
-    }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid;
-        }
-
-    .button-group {
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-
-    .btn-cancel,
-    .btn-save,
-    .btn-delete-confirm {
-        padding: 6px 12px;
-        border: 1px solid;
-        cursor: pointer;
-    }
-
-    .button-bar {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 16px;
-    }
-
-    .sort-dropdown {
-        padding: 8px;
-        border: 1px solid;
-        cursor: pointer;
-    }
-
-</style>
-
 @code {
     private List<Product> products = new();
     private bool showDialog = false;
@@ -272,15 +141,37 @@
     {
         products = await ProductService.GetProductsAsync();
 
-        // Automatically filter to show only relevant expiration statuses
+        // Only show items with meaningful expiration statuses
         products = products
-            .Where(p => new[] { "Expired", "Expiring Soon", "Going Bad", "Bad" }
-            .Contains(p.GetExpirationStatus()))
+            .Where(p => new[] { "Expired", "Expiring Soon", "Going Bad", "Bad" }.Contains(p.GetExpirationStatus()))
             .ToList();
 
         StateHasChanged();
     }
 
+    private bool IsExpired(Product p) =>
+        p.ExpDate.Date < DateTime.Now.Date;
+
+    private bool IsExpiringSoon(Product p)
+    {
+        var diff = (p.ExpDate - DateTime.Now).TotalDays;
+        return diff >= 0 && diff <= 3;
+    }
+
+    private bool IsBad(Product p) =>
+        p.GetExpirationStatus() == "Bad";
+
+    private bool IsGoingBad(Product p) =>
+        p.GetExpirationStatus() == "Going Bad";
+
+    private string GetHighlightClass(Product p)
+    {
+        if (IsBad(p)) return "bad-item";
+        if (IsGoingBad(p)) return "goingbad-item";
+        if (IsExpired(p)) return "expired-item";
+        if (IsExpiringSoon(p)) return "expiring-item";
+        return "";
+    }
 
     private void ShowAddDialog()
     {
@@ -291,7 +182,6 @@
 
     private void ShowEditDialog(Product product)
     {
-        // Create a copy of the product to edit
         currentProduct = new Product(
             product.Name,
             product.Category,
@@ -314,8 +204,8 @@
 
     private async Task SaveProduct()
     {
-        if (!string.IsNullOrWhiteSpace(currentProduct.Name) &&
-            !string.IsNullOrWhiteSpace(currentProduct.Category))
+        if (!string.IsNullOrWhiteSpace(currentProduct.Name)
+            && !string.IsNullOrWhiteSpace(currentProduct.Category))
         {
             await ProductService.SaveProductAsync(currentProduct);
             await LoadProducts();
@@ -371,17 +261,13 @@
         StateHasChanged();
     }
 
-    private int GetStatusOrder(string status)
-    {
-        // Defines sorting order for statuses
-        return status switch
+    private int GetStatusOrder(string status) =>
+        status switch
         {
             "Expired" => 1,
             "Bad" => 2,
             "Expiring Soon" => 3,
             "Going Bad" => 4,
-            _ => 5 // Anything else (e.g., "Good" or blank)
+            _ => 5
         };
-    }
-
 }

@@ -19,15 +19,30 @@ namespace CapstoneProject2025
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
-            builder.Logging.AddDebug();
+            builder.Services.AddLogging(logging =>
+            {
+                logging.AddDebug();
+            });
 #endif
 
             // Register services
-            builder.Services.AddSingleton<IProductService, ProductService>();
-            builder.Services.AddSingleton<IPinAuthenticationService, PinAuthenticationService>();
             builder.Services.AddSingleton<IAuthStateProvider, AuthStateProvider>();
+            builder.Services.AddSingleton<IPinAuthenticationService, PinAuthenticationService>();
+            builder.Services.AddSingleton<IProductService, ProductService>();
+            builder.Services.AddSingleton<IPantryNotificationService, PantryNotificationService>();
 
-            return builder.Build();
+            var app = builder.Build();
+
+            // Initialize notification service after building
+            var productService = app.Services.GetRequiredService<IProductService>() as ProductService;
+            var notificationService = app.Services.GetRequiredService<IPantryNotificationService>();
+
+            if (productService != null)
+            {
+                productService.SetNotificationService(notificationService);
+            }
+
+            return app;
         }
     }
 }

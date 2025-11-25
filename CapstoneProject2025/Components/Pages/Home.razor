@@ -3,6 +3,7 @@
 @using CapstoneProject2025.Services
 @inject IAuthStateProvider AuthStateProvider
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 @if (!AuthStateProvider.IsAuthenticated)
 {
@@ -29,7 +30,7 @@ else
         <div class="grid">
             @foreach (var product in products)
             {
-                <div class="grid-item">
+                <div class="grid-item @GetHighlightClass(product)">
                     <div class="grid-item-header">
                         <h3>@product.Name</h3>
                         <div class="item-actions">
@@ -61,15 +62,16 @@ else
                     <p class="date">
                         @if (product.DateType == DateType.Expiration)
                         {
-                            <text>Expires: @product.ExpDate.ToShortDateString()</text>
+                            <text>Expires: @GetRelativeFutureDate(product.ExpDate)</text>
                         }
                         else
                         {
-                            <text>Best before: @product.ExpDate.ToShortDateString()</text>
+                            <text>Best before: @GetRelativeFutureDate(product.ExpDate)</text>
                         }
                     </p>
-                    <p class="date">Added: @product.DateAdded.ToShortDateString()</p>
-                    <p class="date">Last modified: @product.LastModified.ToShortDateString()</p>
+
+                    <p class="date">Added: @GetRelativeDate(product.DateAdded)</p>
+                    <p class="date">Last modified: @GetRelativeDate(product.LastModified)</p>
                 </div>
             }
         </div>
@@ -165,8 +167,8 @@ else
     private Product currentProduct = new Product("", "", DateTime.Now.AddDays(7), DateType.BestBefore);
     private Product? productToDelete = null;
 
-    [Inject]
-    private IProductService ProductService { get; set; }
+    [Inject] private IProductService ProductService { get; set; }
+    [Inject] private IPantryNotificationService NotificationService { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -177,6 +179,8 @@ else
         }
 
         await ProductService.InitializeAsync();
+        await NotificationService.InitializeAsync();
+        await NotificationService.CheckAndScheduleNotificationsAsync();
         await LoadProducts();
     }
 
@@ -285,4 +289,64 @@ else
             _ => 5
         };
     }
+
+    private string GetRelativeDate(DateTime date)
+    {
+        var diff = DateTime.Now - date;
+
+        if (diff.TotalDays < 1)
+        {
+            if (diff.TotalHours < 1) return $"{Math.Max((int)diff.TotalMinutes, 1)} minutes ago";
+            return $"{Math.Max((int)diff.TotalHours, 1)} hours ago";
+        }
+        if (diff.TotalDays < 30) return $"{Math.Max((int)diff.TotalDays, 1)} days ago";
+        if (diff.TotalDays < 365) return $"{Math.Max((int)(diff.TotalDays / 30), 1)} months ago";
+        return $"{Math.Max((int)(diff.TotalDays / 365), 1)} years ago";
+    }
+
+    private string GetRelativeFutureDate(DateTime date)
+    {
+        var diff = date - DateTime.Now;
+
+        if (diff.TotalDays < 1)
+        {
+            if (diff.TotalHours < 1) return $"in {Math.Max((int)diff.TotalMinutes, 1)} minutes";
+            return $"in {Math.Max((int)diff.TotalHours, 1)} hours";
+        }
+        if (diff.TotalDays < 30) return $"in {Math.Max((int)diff.TotalDays, 1)} days";
+        if (diff.TotalDays < 365) return $"in {Math.Max((int)(diff.TotalDays / 30), 1)} months";
+        return $"in {Math.Max((int)(diff.TotalDays / 365), 1)} years";
+    }
+
+    private bool IsExpired(Product p)
+    {
+        return p.ExpDate.Date < DateTime.Now.Date;
+    }
+
+    private bool IsExpiringSoon(Product p)
+    {
+        var diff = (p.ExpDate - DateTime.Now).TotalDays;
+        return diff >= 0 && diff <= 3;
+    }
+
+    private bool IsBad(Product p)
+    {
+        return p.GetExpirationStatus() == "Bad";
+    }
+
+    private bool IsGoingBad(Product p)
+    {
+        return p.GetExpirationStatus() == "Going Bad";
+    }
+
+    private string GetHighlightClass(Product p)
+    {
+        if (IsBad(p)) return "bad-item";
+        if (IsGoingBad(p)) return "goingbad-item";
+        if (IsExpired(p)) return "expired-item";
+        if (IsExpiringSoon(p)) return "expiring-item";
+
+        return "";
+    }
+
 }
