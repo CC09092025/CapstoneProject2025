@@ -9,10 +9,20 @@ namespace CapstoneProject2025.Services
     {
         private SQLiteAsyncConnection _database;
         private IPantryNotificationService _notificationService;
+        private readonly string _databasePath;
 
+        // Production constructor
         public ProductService()
         {
-            _database = new SQLiteAsyncConnection(GetDatabasePath(), SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.SharedCache);
+            _databasePath = GetDatabasePath();
+            _database = new SQLiteAsyncConnection(_databasePath, SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.SharedCache);
+        }
+
+        // Test constructor - allows injecting database path
+        public ProductService(string databasePath)
+        {
+            _databasePath = databasePath;
+            _database = new SQLiteAsyncConnection(_databasePath, SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.SharedCache);
         }
 
         public void SetNotificationService(IPantryNotificationService notificationService)
