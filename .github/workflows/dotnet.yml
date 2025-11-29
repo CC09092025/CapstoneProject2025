@@ -22,7 +22,7 @@ jobs:
           dotnet-version: 9.0.306
 
       - name: Install MAUI workloads
-        run: dotnet workload install maui
+        run: dotnet workload install maui maui-windows maui-windows-coreclr
 
       - name: Restore dependencies
         run: dotnet restore ./CapstoneProject2025.sln -r win-x64
