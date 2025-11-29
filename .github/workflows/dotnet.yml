@@ -1,4 +1,4 @@
-name: .NET Build Only
+name: .NET MAUI Build Only
 
 on:
   push:
@@ -9,20 +9,24 @@ on:
       - master
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup .NET SDK
+      - name: Setup .NET SDK with MAUI workloads
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 8.0.x
+          include-prerelease: true
 
-      - name: Restore dependencies for win-x64
-        run: dotnet restore --runtime win-x64
+      - name: Install MAUI workloads
+        run: dotnet workload install maui
 
-      - name: Build solution for win-x64
-        run: dotnet build --configuration Release --no-restore --runtime win-x64
+      - name: Restore dependencies
+        run: dotnet restore ./CapstoneProject2025.sln
+
+      - name: Build Windows target
+        run: dotnet build ./CapstoneProject2025.sln -f net9.0-windows10.0.19041.0 -c Release --no-restore
