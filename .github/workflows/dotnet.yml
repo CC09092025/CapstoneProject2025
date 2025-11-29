@@ -1,4 +1,4 @@
-name: .NET MAUI Build Only (.NET 9 Preview)
+name: .NET MAUI Build Only
 
 on:
   push:
