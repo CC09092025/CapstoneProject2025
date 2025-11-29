@@ -16,19 +16,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup .NET 9 Preview SDK
+      - name: Setup .NET 9 SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 9.0.306-preview
+          dotnet-version: 9.0.306
 
       - name: Install MAUI workloads
         run: dotnet workload install maui
 
-      - name: Update MAUI workloads
-        run: dotnet workload update
-
-      - name: Restore dependencies (with runtime)
-        run: dotnet restore ./CapstoneProject2025.sln --runtime win-x64
+      - name: Restore dependencies
+        run: dotnet restore ./CapstoneProject2025.sln
 
       - name: Build Windows target
-        run: dotnet build ./CapstoneProject2025.sln -f net9.0-windows10.0.19041.0 -c Release -r win-x64 --no-restore
+        run: dotnet build ./CapstoneProject2025.sln -f net9.0-windows10.0.19041.0 -c Release --no-restore
