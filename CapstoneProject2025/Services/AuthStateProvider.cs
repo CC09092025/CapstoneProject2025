@@ -4,7 +4,7 @@
     {
         
         bool IsAuthenticated { get; set; }
-        event Action OnAuthStateChanged;
+        event Action? OnAuthStateChanged;
         void NotifyAuthStateChanged();
     }
 
@@ -25,7 +25,7 @@
             }
         }
 
-        public event Action OnAuthStateChanged;
+        public event Action? OnAuthStateChanged;
 
         public void NotifyAuthStateChanged()
         {
