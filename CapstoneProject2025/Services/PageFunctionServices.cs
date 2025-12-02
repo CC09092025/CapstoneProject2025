@@ -41,5 +41,17 @@ namespace CapstoneProject2025.Services
                 return $"in {Math.Max((int)(diff.TotalDays / 30), 1)} months";
             return $"in {Math.Max((int)(diff.TotalDays / 365), 1)} years";
         }
+
+        public int GetStatusOrder(string status)
+        {
+            return status switch
+            {
+                "Expired" => 1,
+                "Bad" => 2,
+                "Expiring Soon" => 3,
+                "Going Bad" => 4,
+                _ => 5
+            };
+        }
     }
 }
