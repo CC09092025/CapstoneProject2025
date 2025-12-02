@@ -24,20 +24,19 @@
                 <p class="date">
                     @if (product.DateType == DateType.Expiration)
                     {
-                        <text>Expires: @product.ExpDate.ToShortDateString()</text>
+                        <text>Expires: @GetRelativeFutureDate(product.ExpDate)</text>
                     }
                     else
                     {
-                        <text>Best before: @product.ExpDate.ToShortDateString()</text>
+                        <text>Goes bad: @GetRelativeFutureDate(product.ExpDate)</text>
                     }
                 </p>
-                <p class="date">Added: @product.DateAdded.ToShortDateString()</p>
-                <p class="date">Last modified: @product.LastModified.ToShortDateString()</p>
+                <p class="date">Added: @GetRelativeDate(product.DateAdded)</p>
+                <p class="date">Last modified: @GetRelativeDate(product.LastModified)</p>
             </div>
         }
     </div>
 </div>
-
 
 @* Add/Edit Product Dialog *@
 @if (showDialog)
@@ -147,6 +146,46 @@
             .ToList();
 
         StateHasChanged();
+    }
+
+    private string GetRelativeDate(DateTime date)
+    {
+        var diff = DateTime.Now - date;
+
+        if (diff.TotalDays < 1)
+        {
+            if (diff.TotalHours < 1) return $"{Math.Max((int)diff.TotalMinutes, 1)} minutes ago";
+            return $"{Math.Max((int)diff.TotalHours, 1)} hours ago";
+        }
+        if (diff.TotalDays < 30) return $"{Math.Max((int)diff.TotalDays, 1)} days ago";
+        if (diff.TotalDays < 365) return $"{Math.Max((int)(diff.TotalDays / 30), 1)} months ago";
+        return $"{Math.Max((int)(diff.TotalDays / 365), 1)} years ago";
+    }
+
+    private string GetRelativeFutureDate(DateTime date)
+    {
+        var diff = date - DateTime.Now;
+
+        if (diff.TotalDays < 0)
+        {
+            var absDiff = -diff;
+            if (absDiff.TotalDays < 1)
+            {
+                if (absDiff.TotalHours < 1) return $"{Math.Max((int)absDiff.TotalMinutes, 1)} minutes ago";
+                return $"{Math.Max((int)absDiff.TotalHours, 1)} hours ago";
+            }
+            if (absDiff.TotalDays < 30) return $"{Math.Max((int)absDiff.TotalDays, 1)} days ago";
+            if (absDiff.TotalDays < 365) return $"{Math.Max((int)(absDiff.TotalDays / 30), 1)} months ago";
+            return $"{Math.Max((int)(absDiff.TotalDays / 365), 1)} years ago";
+        }
+        else if (diff.TotalDays < 1)
+        {
+            if (diff.TotalHours < 1) return $"in {Math.Max((int)diff.TotalMinutes, 1)} minutes";
+            return $"in {Math.Max((int)diff.TotalHours, 1)} hours";
+        }
+        else if (diff.TotalDays < 30) return $"in {Math.Max((int)diff.TotalDays, 1)} days";
+        else if (diff.TotalDays < 365) return $"in {Math.Max((int)(diff.TotalDays / 30), 1)} months";
+        else return $"in {Math.Max((int)(diff.TotalDays / 365), 1)} years";
     }
 
     private bool IsExpired(Product p) =>

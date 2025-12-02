@@ -3,6 +3,7 @@
 @using CapstoneProject2025.Services
 @inject IAuthStateProvider AuthStateProvider
 @inject NavigationManager Navigation
+@inject PageFunctionServices PageFunctionService
 @inject IJSRuntime JS
 
 @if (!AuthStateProvider.IsAuthenticated)
@@ -62,11 +63,11 @@ else
                     <p class="date">
                         @if (product.DateType == DateType.Expiration)
                         {
-                            <text>Expires: @GetRelativeFutureDate(product.ExpDate)</text>
+                            <text>Expires: @PageFunctionService.GetRelativeFutureDate(product.ExpDate)</text>
                         }
                         else
                         {
-                            <text>Best before: @GetRelativeFutureDate(product.ExpDate)</text>
+                            <text>Goes bad: @PageFunctionService.GetRelativeFutureDate(product.ExpDate)</text>
                         }
                     </p>
 

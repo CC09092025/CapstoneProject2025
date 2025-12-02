@@ -34,7 +34,7 @@
                 <div class="grid-item @GetHighlightClass(product)">
                     <h3>@product.Name</h3>
                     <p>Category: @product.Category</p>
-                    <p>@(product.DateType == DateType.Expiration ? "Expires: " : "Best before: ") @GetRelativeFutureDate(product.ExpDate)</p>
+                    <p>@(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ") @GetRelativeFutureDate(product.ExpDate)</p>
                 </div>
             }
         }

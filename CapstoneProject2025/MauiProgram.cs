@@ -30,6 +30,7 @@ namespace CapstoneProject2025
             builder.Services.AddSingleton<IPinAuthenticationService, PinAuthenticationService>();
             builder.Services.AddSingleton<IProductService, ProductService>();
             builder.Services.AddSingleton<IPantryNotificationService, PantryNotificationService>();
+            builder.Services.AddSingleton<PageFunctionServices>();
 
             var app = builder.Build();
 
