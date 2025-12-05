@@ -1,31 +1,36 @@
-name: .NET MAUI Build Only
+name: .NET MAUI
 
 on:
   push:
-    branches:
-      - master
+    branches: [ "master" ]
   pull_request:
-    branches:
-      - master
+    branches: [ "master" ]
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET 9 SDK
-        uses: actions/setup-dotnet@v3
+      - name: Install Windows build tool dependencies
+        run: |
+          winget install --id Microsoft.VisualStudio.2022.BuildTools -e --source winget `
+            --override "--quiet --wait --norestart --nocache `
+            --add Microsoft.VisualStudio.ComponentGroup.UWP.VC `
+            --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
+            --add Microsoft.VisualStudio.ComponentGroup.Maui.Windows"
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.306
+          dotnet-version: 9.0.x
 
-      - name: Install MAUI workloads
-        run: dotnet workload install maui
+      - name: Install MAUI Workloads
+        run: dotnet workload install maui-windows
 
-      - name: Restore dependencies
-        run: dotnet restore ./CapstoneProject2025.sln
+      - name: Restore with RID
+        run: dotnet restore -r win-x64
 
-      - name: Build Windows target
-        run: dotnet build ./CapstoneProject2025.sln -f net9.0-windows10.0.19041.0 -c Release --no-restore
+      - name: Build
+        run: dotnet build -f net9.0-windows10.0.19041.0 -c Release --no-restore
