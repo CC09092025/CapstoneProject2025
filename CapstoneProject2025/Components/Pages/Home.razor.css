@@ -70,39 +70,40 @@
 .tag {
     display: inline-block;
     padding: 2px 8px;
-    border: none;
     border-radius: 12px;
     font-size: 11px;
     font-weight: 500;
 }
 
 .category-tag {
-    background-color: #e8def8;
-    color: #381e72;
+    background-color: rgba(74, 155, 142, 0.2);
+    color: #2f6b63;
+    border: 1px solid #4a9b8e;
 }
 
 .status-tag {
-    background-color: #f0f9ff;
-    color: #0061a4;
+    background-color: rgba(0, 97, 164, 0.2);
+    color: #003f6a;
+    border-radius: 12px;
 }
 
     .status-tag.expiring-soon {
-        background-color: #fff7cc;
+        background-color: #fff4a3;
         color: #7a5500;
     }
 
     .status-tag.expired {
-        background-color: #ffdcd8;
+        background-color: #ff8b8b;
         color: #7c1d1d;
     }
 
     .status-tag.going-bad {
-        background-color: #f7d8ba;
+        background-color: #ffc08b;
         color: #7a5500;
     }
 
     .status-tag.bad {
-        background-color: #ffdcd8;
+        background-color: #ff6b6b;
         color: #7c1d1d;
     }
 
@@ -200,113 +201,109 @@
 .bad-item {
     border: 3px solid #b00000;
     background: rgba(255, 0, 0, 0.15);
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
 }
 
 .goingbad-item {
     border: 3px solid #ff7300;
     background: rgba(255, 153, 0, 0.15);
-    box-shadow: 0 0 10px rgba(255, 153, 0, 0.4);
 }
 
 .expiring-item {
     border: 3px solid #dcdc00;
     background: rgba(255, 255, 0, 0.15);
-    box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
 }
 
 .expired-item {
     border: 3px solid #8b0000;
     background: rgba(139, 0, 0, 0.15);
-    box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
 }
 
 .tag.category-dairy {
     border: 1px solid #4a9b8e;
-    background-color: rgba(74, 155, 142, 0.1);
-    color: #4a9b8e;
+    background-color: rgba(74, 155, 142, 0.2);
+    color: #2f6b63;
 }
 
 .tag.category-meat {
     border: 1px solid #b71c1c;
-    background-color: rgba(183, 28, 28, 0.1);
-    color: #b71c1c;
+    background-color: rgba(183, 28, 28, 0.2);
+    color: #7c0f0f;
 }
 
 .tag.category-poultry {
     border: 1px solid #f57c00;
-    background-color: rgba(245, 124, 0, 0.1);
-    color: #f57c00;
+    background-color: rgba(245, 124, 0, 0.2);
+    color: #b85a00;
 }
 
 .tag.category-seafood {
     border: 1px solid #0288d1;
-    background-color: rgba(2, 136, 209, 0.1);
-    color: #0288d1;
+    background-color: rgba(2, 136, 209, 0.2);
+    color: #015a8a;
 }
 
 .tag.category-fruit {
     border: 1px solid #c2185b;
-    background-color: rgba(194, 24, 91, 0.1);
-    color: #c2185b;
+    background-color: rgba(194, 24, 91, 0.2);
+    color: #7d1140;
 }
 
 .tag.category-vegetable {
     border: 1px solid #4caf50;
-    background-color: rgba(76, 175, 80, 0.1);
-    color: #4caf50;
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #2d7a2d;
 }
 
 .tag.category-bakery {
     border: 1px solid #a1887f;
-    background-color: rgba(161, 136, 127, 0.1);
-    color: #a1887f;
+    background-color: rgba(161, 136, 127, 0.2);
+    color: #695548;
 }
 
 .tag.category-grains {
     border: 1px solid #d4e157;
-    background-color: rgba(212, 225, 87, 0.1);
-    color: #d4e157;
+    background-color: rgba(212, 225, 87, 0.2);
+    color: #8aa12a;
 }
 
 .tag.category-beverages {
     border: 1px solid #5c6bc0;
-    background-color: rgba(92, 107, 192, 0.1);
-    color: #5c6bc0;
+    background-color: rgba(92, 107, 192, 0.2);
+    color: #2c387e;
 }
 
 .tag.category-condiments {
     border: 1px solid #ffa000;
-    background-color: rgba(255, 160, 0, 0.1);
-    color: #ffa000;
+    background-color: rgba(255, 160, 0, 0.2);
+    color: #b36b00;
 }
 
 .tag.category-snacks {
     border: 1px solid #7b1fa2;
-    background-color: rgba(123, 31, 162, 0.1);
-    color: #7b1fa2;
+    background-color: rgba(123, 31, 162, 0.2);
+    color: #4c0f70;
 }
 
 .tag.category-frozen {
     border: 1px solid #0097a7;
-    background-color: rgba(0, 151, 167, 0.1);
-    color: #0097a7;
+    background-color: rgba(0, 151, 167, 0.2);
+    color: #006f75;
 }
 
 .tag.category-deli {
     border: 1px solid #5d4037;
-    background-color: rgba(93, 64, 55, 0.1);
-    color: #5d4037;
+    background-color: rgba(93, 64, 55, 0.2);
+    color: #3a2721;
 }
 
 .tag.category-canned {
     border: 1px solid #757575;
-    background-color: rgba(117, 117, 117, 0.1);
-    color: #757575;
+    background-color: rgba(117, 117, 117, 0.2);
+    color: #444444;
 }
 
 .tag.category-other {
     border: 1px solid #616161;
-    background-color: rgba(97, 97, 97, 0.1);
-    color: #616161;
+    background-color: rgba(97, 97, 97, 0.2);
+    color: #333333;
 }

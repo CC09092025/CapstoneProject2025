@@ -5,8 +5,10 @@
 @inject PageFunctionServices PageFunctionService
 
 <div class="container">
+
+    <h2>Expired / Expiring</h2>
     <div class="grid">
-        @foreach (var product in products)
+        @foreach (var product in expiredExpiringProducts)
         {
             <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
                 <div class="grid-item-header">
@@ -32,10 +34,41 @@
             </div>
         }
     </div>
+
+    <h2>Bad / Going Bad</h2>
+    <div class="grid">
+        @foreach (var product in badGoingBadProducts)
+        {
+            <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
+                <div class="grid-item-header">
+                    <h3>@product.Name</h3>
+                </div>
+
+                <div class="tag-container">
+                    <span class="tag @product.GetCategoryTag()">@product.Category</span>
+                    @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
+                    {
+                        <span class="tag @product.GetStatusTagClass()">
+                            @product.GetExpirationStatus()
+                        </span>
+                    }
+                </div>
+
+                <p class="date">
+                    @(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ")
+                    @PageFunctionService.GetRelativeFutureDate(product.ExpDate)
+                </p>
+                <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
+                <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
+            </div>
+        }
+    </div>
+
 </div>
 
 @code {
-    private List<Product> products = new();
+    private List<Product> expiredExpiringProducts = new();
+    private List<Product> badGoingBadProducts = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,9 +80,14 @@
     {
         var allProducts = await ProductService.GetProductsAsync();
 
-        products = allProducts
-            .Where(p => new[] { "Expired", "Expiring Soon", "Going Bad", "Bad" }
-            .Contains(p.GetExpirationStatus()))
+        expiredExpiringProducts = allProducts
+            .Where(p => p.GetExpirationStatus() == "Expired" || p.GetExpirationStatus() == "Expiring Soon")
+            .OrderBy(p => p.GetExpirationStatus() == "Expired" ? 0 : 1) // Expired first
+            .ToList();
+
+        badGoingBadProducts = allProducts
+            .Where(p => p.GetExpirationStatus() == "Bad" || p.GetExpirationStatus() == "Going Bad")
+            .OrderBy(p => p.GetExpirationStatus() == "Bad" ? 0 : 1) // Bad first
             .ToList();
 
         StateHasChanged();

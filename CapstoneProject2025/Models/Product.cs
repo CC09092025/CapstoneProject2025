@@ -43,9 +43,10 @@ namespace CapstoneProject2025.Models
 
         public bool IsExpiringSoon()
         {
-            var daysUntilExpiration = (ExpDate - DateTime.Now).Days;
-            return daysUntilExpiration <= 10 && daysUntilExpiration >= 0;
+            var diff = (ExpDate - DateTime.Now).TotalDays;
+            return diff >= 0 && diff <= 10;  // or 10 if you prefer, but consistent!
         }
+
 
         public bool IsExpiredNow()
         {
@@ -54,19 +55,20 @@ namespace CapstoneProject2025.Models
 
         public string GetExpirationStatus()
         {
-            if (IsExpiredNow())
-            {
+            var diff = (ExpDate - DateTime.Now).TotalDays;
+
+            // EXPIRED / BAD
+            if (diff < 0)
                 return DateType == DateType.Expiration ? "Expired" : "Bad";
-            }
-            else if (IsExpiringSoon())
-            {
+
+            // EXPIRING SOON / GOING BAD (0–10 days)
+            if (diff <= 10)
                 return DateType == DateType.Expiration ? "Expiring Soon" : "Going Bad";
-            }
-            else
-            {
-                return string.Empty;
-            }
+
+            // Otherwise no status
+            return string.Empty;
         }
+
 
         public string GetCategoryTag()
         {

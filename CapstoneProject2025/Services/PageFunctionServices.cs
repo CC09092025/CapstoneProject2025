@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CapstoneProject2025.Models;
 
 namespace CapstoneProject2025.Services
@@ -30,6 +26,14 @@ namespace CapstoneProject2025.Services
         {
             var diff = date - DateTime.Now;
 
+            if (diff.TotalDays < 0)
+            {
+                // Past date
+                if (diff.TotalHours > -1)
+                    return $"{Math.Max((int)(-diff.TotalMinutes), 1)} minutes ago";
+                return $"{Math.Max((int)(-diff.TotalHours), 1)} hours ago";
+            }
+
             if (diff.TotalDays < 1)
             {
                 if (diff.TotalHours < 1)
@@ -55,17 +59,19 @@ namespace CapstoneProject2025.Services
             };
         }
 
-        // New helper functions
+        // Determine highlight classes for products
 
         public bool IsExpired(Product product)
         {
-            return product.ExpDate.Date < DateTime.Now.Date;
+            // Only true for Expiration-type products
+            return product.GetExpirationStatus() == "Expired";
         }
 
         public bool IsExpiringSoon(Product product)
         {
-            var diff = (product.ExpDate - DateTime.Now).TotalDays;
-            return diff >= 0 && diff <= 3;
+            // 10-day window
+            var diff = (product.ExpDate.Date - DateTime.Now.Date).TotalDays;
+            return diff >= 0 && diff <= 10 && product.GetExpirationStatus() == "Expiring Soon";
         }
 
         public bool IsBad(Product product)
@@ -88,5 +94,4 @@ namespace CapstoneProject2025.Services
             return "";
         }
     }
-
 }
