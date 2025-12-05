@@ -1,21 +1,36 @@
-﻿namespace CapstoneProject2025.Services
+﻿#if WINDOWS
+using System;
+using System.Threading.Tasks;
+using Microsoft.Toolkit.Uwp.Notifications;
+using Windows.UI.Notifications;
+
+namespace CapstoneProject2025.Services
 {
     public partial class PantryNotificationService
     {
         partial void InitializePlatform()
         {
-            // Windows implementation would go here
         }
 
         partial void ShowNotification(int id, string title, string message)
         {
-            // Windows implementation would go here
+            var toastContent = new ToastContentBuilder()
+                .AddText(title)
+                .AddText(message)
+                .GetToastContent();
+
+            var toast = new ToastNotification(toastContent.GetXml())
+            {
+                ExpirationTime = DateTimeOffset.UtcNow.AddHours(1)
+            };
+
+            ToastNotificationManager.CreateToastNotifier("CapstoneProject2025").Show(toast);
         }
 
         public Task RequestPermissionsAsync()
         {
-            // Windows implementation would go here
             return Task.CompletedTask;
         }
     }
 }
+#endif

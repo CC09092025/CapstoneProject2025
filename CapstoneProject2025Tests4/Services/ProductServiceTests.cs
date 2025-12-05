@@ -165,7 +165,7 @@ namespace CapstoneProject2025.Services.Testing
             // Assert
             Assert.AreEqual(1, result);
             var products = await productService.GetProductsAsync();
-            Assert.AreEqual(0, products.Count);
+            Assert.AreEqual(0, products.Count());
         }
     }
 }

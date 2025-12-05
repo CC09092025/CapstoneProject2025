@@ -2,6 +2,7 @@
 @using CapstoneProject2025.Models
 @using CapstoneProject2025.Services
 @inject IProductService ProductService
+@inject PageFunctionServices PageFunctionService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -31,10 +32,13 @@
         {
             @foreach (var product in filteredProducts)
             {
-                <div class="grid-item @GetHighlightClass(product)">
+                <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
                     <h3>@product.Name</h3>
                     <p>Category: @product.Category</p>
-                    <p>@(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ") @GetRelativeFutureDate(product.ExpDate)</p>
+                    <p>
+                        @(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ")
+                        @PageFunctionService.GetRelativeFutureDate(product.ExpDate)
+                    </p>
                 </div>
             }
         }
@@ -50,7 +54,6 @@
     private List<Product> products = new();
     private List<Product> filteredProducts = new();
 
-    // Property bound to the input field, triggers live search
     private string SearchQuery
     {
         get => searchQuery;
@@ -88,64 +91,16 @@
     {
         var sortOption = e.Value?.ToString();
 
-        switch (sortOption)
+        filteredProducts = sortOption switch
         {
-            case "NameAZ":
-                filteredProducts = filteredProducts.OrderBy(p => p.Name).ToList();
-                break;
-            case "NameZA":
-                filteredProducts = filteredProducts.OrderByDescending(p => p.Name).ToList();
-                break;
-            case "CategoryAZ":
-                filteredProducts = filteredProducts.OrderBy(p => p.Category).ToList();
-                break;
-            case "CategoryZA":
-                filteredProducts = filteredProducts.OrderByDescending(p => p.Category).ToList();
-                break;
-            case "ExpirationStatus":
-                filteredProducts = filteredProducts.OrderBy(p => GetStatusOrder(p.GetExpirationStatus())).ToList();
-                break;
-        }
+            "NameAZ" => filteredProducts.OrderBy(p => p.Name).ToList(),
+            "NameZA" => filteredProducts.OrderByDescending(p => p.Name).ToList(),
+            "CategoryAZ" => filteredProducts.OrderBy(p => p.Category).ToList(),
+            "CategoryZA" => filteredProducts.OrderByDescending(p => p.Category).ToList(),
+            "ExpirationStatus" => filteredProducts.OrderBy(p => PageFunctionService.GetStatusOrder(p.GetExpirationStatus())).ToList(),
+            _ => filteredProducts
+        };
 
         StateHasChanged();
-    }
-
-    private int GetStatusOrder(string status)
-    {
-        return status switch
-        {
-            "Expired" => 1,
-            "Bad" => 2,
-            "Expiring Soon" => 3,
-            "Going Bad" => 4,
-            _ => 5
-        };
-    }
-
-    private string GetRelativeFutureDate(DateTime date)
-    {
-        var diff = date - DateTime.Now;
-
-        if (diff.TotalDays < 1)
-        {
-            if (diff.TotalHours < 1) return $"in {Math.Max((int)diff.TotalMinutes, 1)} minutes";
-            return $"in {Math.Max((int)diff.TotalHours, 1)} hours";
-        }
-        if (diff.TotalDays < 30) return $"in {Math.Max((int)diff.TotalDays, 1)} days";
-        if (diff.TotalDays < 365) return $"in {Math.Max((int)(diff.TotalDays / 30), 1)} months";
-        return $"in {Math.Max((int)(diff.TotalDays / 365), 1)} years";
-    }
-
-    private string GetHighlightClass(Product p)
-    {
-        var status = p.GetExpirationStatus();
-        return status switch
-        {
-            "Bad" => "bad-item",
-            "Going Bad" => "goingbad-item",
-            "Expired" => "expired-item",
-            "Expiring Soon" => "expiring-item",
-            _ => ""
-        };
     }
 }

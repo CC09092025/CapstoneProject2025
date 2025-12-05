@@ -31,21 +31,15 @@ else
         <div class="grid">
             @foreach (var product in products)
             {
-                <div class="grid-item @GetHighlightClass(product)">
+                <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
                     <div class="grid-item-header">
                         <h3>@product.Name</h3>
                         <div class="item-actions">
                             <button class="btn-edit" @onclick="() => ShowEditDialog(product)" title="Edit">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
+                                <!-- SVG icon -->
                             </button>
                             <button class="btn-delete" @onclick="() => DeleteProduct(product)" title="Delete">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M3 6h18"></path>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
+                                <!-- SVG icon -->
                             </button>
                         </div>
                     </div>
@@ -71,8 +65,8 @@ else
                         }
                     </p>
 
-                    <p class="date">Added: @GetRelativeDate(product.DateAdded)</p>
-                    <p class="date">Last modified: @GetRelativeDate(product.LastModified)</p>
+                    <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
+                    <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
                 </div>
             }
         </div>
@@ -87,9 +81,7 @@ else
 
                 <div class="form-group">
                     <label>Product Name</label>
-                    <input type="text"
-                           @bind="currentProduct.Name"
-                           placeholder="Enter product name" />
+                    <input type="text" @bind="currentProduct.Name" placeholder="Enter product name" />
                 </div>
 
                 <div class="form-group">
@@ -128,9 +120,7 @@ else
                 </div>
 
                 <div class="button-group">
-                    <button class="btn-cancel" @onclick="CloseDialog">
-                        Cancel
-                    </button>
+                    <button class="btn-cancel" @onclick="CloseDialog">Cancel</button>
                     <button class="btn-save" @onclick="SaveProduct">
                         @(isEditing ? "Update Product" : "Add Product")
                     </button>
@@ -148,12 +138,8 @@ else
                 <p>Are you sure you want to delete "@productToDelete?.Name"?</p>
 
                 <div class="button-group">
-                    <button class="btn-cancel" @onclick="CloseDeleteConfirm">
-                        Cancel
-                    </button>
-                    <button class="btn-delete-confirm" @onclick="ConfirmDelete">
-                        Delete
-                    </button>
+                    <button class="btn-cancel" @onclick="CloseDeleteConfirm">Cancel</button>
+                    <button class="btn-delete-confirm" @onclick="ConfirmDelete">Delete</button>
                 </div>
             </div>
         </div>
@@ -257,97 +243,16 @@ else
     {
         var sortOption = e.Value?.ToString();
 
-        switch (sortOption)
+        products = sortOption switch
         {
-            case "NameAZ":
-                products = products.OrderBy(p => p.Name).ToList();
-                break;
-            case "NameZA":
-                products = products.OrderByDescending(p => p.Name).ToList();
-                break;
-            case "CategoryAZ":
-                products = products.OrderBy(p => p.Category).ToList();
-                break;
-            case "CategoryZA":
-                products = products.OrderByDescending(p => p.Category).ToList();
-                break;
-            case "ExpirationStatus":
-                products = products.OrderBy(p => GetStatusOrder(p.GetExpirationStatus())).ToList();
-                break;
-        }
+            "NameAZ" => products.OrderBy(p => p.Name).ToList(),
+            "NameZA" => products.OrderByDescending(p => p.Name).ToList(),
+            "CategoryAZ" => products.OrderBy(p => p.Category).ToList(),
+            "CategoryZA" => products.OrderByDescending(p => p.Category).ToList(),
+            "ExpirationStatus" => products.OrderBy(p => PageFunctionService.GetStatusOrder(p.GetExpirationStatus())).ToList(),
+            _ => products
+        };
 
         StateHasChanged();
     }
-
-    private int GetStatusOrder(string status)
-    {
-        return status switch
-        {
-            "Expired" => 1,
-            "Bad" => 2,
-            "Expiring Soon" => 3,
-            "Going Bad" => 4,
-            _ => 5
-        };
-    }
-
-    private string GetRelativeDate(DateTime date)
-    {
-        var diff = DateTime.Now - date;
-
-        if (diff.TotalDays < 1)
-        {
-            if (diff.TotalHours < 1) return $"{Math.Max((int)diff.TotalMinutes, 1)} minutes ago";
-            return $"{Math.Max((int)diff.TotalHours, 1)} hours ago";
-        }
-        if (diff.TotalDays < 30) return $"{Math.Max((int)diff.TotalDays, 1)} days ago";
-        if (diff.TotalDays < 365) return $"{Math.Max((int)(diff.TotalDays / 30), 1)} months ago";
-        return $"{Math.Max((int)(diff.TotalDays / 365), 1)} years ago";
-    }
-
-    private string GetRelativeFutureDate(DateTime date)
-    {
-        var diff = date - DateTime.Now;
-
-        if (diff.TotalDays < 1)
-        {
-            if (diff.TotalHours < 1) return $"in {Math.Max((int)diff.TotalMinutes, 1)} minutes";
-            return $"in {Math.Max((int)diff.TotalHours, 1)} hours";
-        }
-        if (diff.TotalDays < 30) return $"in {Math.Max((int)diff.TotalDays, 1)} days";
-        if (diff.TotalDays < 365) return $"in {Math.Max((int)(diff.TotalDays / 30), 1)} months";
-        return $"in {Math.Max((int)(diff.TotalDays / 365), 1)} years";
-    }
-
-    private bool IsExpired(Product p)
-    {
-        return p.ExpDate.Date < DateTime.Now.Date;
-    }
-
-    private bool IsExpiringSoon(Product p)
-    {
-        var diff = (p.ExpDate - DateTime.Now).TotalDays;
-        return diff >= 0 && diff <= 3;
-    }
-
-    private bool IsBad(Product p)
-    {
-        return p.GetExpirationStatus() == "Bad";
-    }
-
-    private bool IsGoingBad(Product p)
-    {
-        return p.GetExpirationStatus() == "Going Bad";
-    }
-
-    private string GetHighlightClass(Product p)
-    {
-        if (IsBad(p)) return "bad-item";
-        if (IsGoingBad(p)) return "goingbad-item";
-        if (IsExpired(p)) return "expired-item";
-        if (IsExpiringSoon(p)) return "expiring-item";
-
-        return "";
-    }
-
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CapstoneProject2025.Models;
 
 namespace CapstoneProject2025.Services
 {
@@ -53,5 +54,39 @@ namespace CapstoneProject2025.Services
                 _ => 5
             };
         }
+
+        // New helper functions
+
+        public bool IsExpired(Product product)
+        {
+            return product.ExpDate.Date < DateTime.Now.Date;
+        }
+
+        public bool IsExpiringSoon(Product product)
+        {
+            var diff = (product.ExpDate - DateTime.Now).TotalDays;
+            return diff >= 0 && diff <= 3;
+        }
+
+        public bool IsBad(Product product)
+        {
+            return product.GetExpirationStatus() == "Bad";
+        }
+
+        public bool IsGoingBad(Product product)
+        {
+            return product.GetExpirationStatus() == "Going Bad";
+        }
+
+        public string GetHighlightClass(Product product)
+        {
+            if (IsBad(product)) return "bad-item";
+            if (IsGoingBad(product)) return "goingbad-item";
+            if (IsExpired(product)) return "expired-item";
+            if (IsExpiringSoon(product)) return "expiring-item";
+
+            return "";
+        }
     }
+
 }

@@ -34,6 +34,10 @@ namespace CapstoneProject2025
 
             var app = builder.Build();
 
+#if ANDROID
+            CapstoneProject2025.Platforms.Android.WorkManagerInitializer.Initialize();
+#endif
+
             // Initialize notification service after building
             var productService = app.Services.GetRequiredService<IProductService>() as ProductService;
             var notificationService = app.Services.GetRequiredService<IPantryNotificationService>();
