@@ -8,80 +8,118 @@
 
 @if (!AuthStateProvider.IsAuthenticated)
 {
-    <p>Redirecting to authentication...</p>
+    <div class="auth-redirect">
+        <div class="loading-spinner"></div>
+        <p>Redirecting to authentication...</p>
+    </div>
 }
 else
 {
     <div class="container">
-        <div class="button-bar">
-            <button class="add-button" @onclick="ShowAddDialog">
-                + Add Product
-            </button>
+        @if (isLoading)
+        {
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Loading your products...</p>
+            </div>
+        }
+        else if (errorMessage != null)
+        {
+            <div class="error-message">
+                <span class="error-icon">⚠️</span>
+                <p>@errorMessage</p>
+                <button class="btn-retry" @onclick="LoadProducts">Retry</button>
+            </div>
+        }
+        else
+        {
+            <div class="button-bar">
+                <button class="add-button" @onclick="ShowAddDialog">
+                    + Add Product
+                </button>
 
-            <select class="sort-dropdown" @onchange="OnSortChanged">
-                <option value="">Sort By...</option>
-                <option value="NameAZ">Name (A-Z)</option>
-                <option value="NameZA">Name (Z-A)</option>
-                <option value="CategoryAZ">Category (A-Z)</option>
-                <option value="CategoryZA">Category (Z-A)</option>
-                <option value="ExpirationStatus">Expiration Status</option>
-            </select>
-        </div>
+                <select class="sort-dropdown" @onchange="OnSortChanged">
+                    <option value="">Sort By...</option>
+                    <option value="NameAZ">Name (A-Z)</option>
+                    <option value="NameZA">Name (Z-A)</option>
+                    <option value="CategoryAZ">Category (A-Z)</option>
+                    <option value="CategoryZA">Category (Z-A)</option>
+                    <option value="ExpirationStatus">Expiration Status</option>
+                </select>
+            </div>
 
-        <div class="grid">
-            @foreach (var product in products)
+            @if (products.Any())
             {
-                <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
-                    <div class="grid-item-header">
-                        <h3>@product.Name</h3>
-                        <div class="item-actions">
-                            <button class="btn-edit" @onclick="() => ShowEditDialog(product)" title="Edit">
-                                <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="#381e72">
-                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71
-                                 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959
-                                 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                                </svg>
-                            </button>
-                            <button class="btn-delete" @onclick="() => DeleteProduct(product)" title="Delete">
-                                <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="#b3261e">
-                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9
-                                 2-2V7H6v12zm3.46-9.12 1.41-1.41L12
-                                 10.59l1.12-1.12 1.41 1.41L13.41
-                                 12l1.12 1.12-1.41 1.41L12 13.41l-1.12
-                                 1.12-1.41-1.41L10.59 12l-1.13-1.12zM15.5
-                                 4l-1-1h-5l-1 1H5v2h14V4z" />
-                                </svg>
-                            </button>
+                <div class="product-count">
+                    <span class="badge">@products.Count</span> product@(products.Count != 1 ? "s" : "")
+                </div>
 
+                <div class="grid">
+                    @foreach (var product in products)
+                    {
+                        <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
+                            <div class="grid-item-header">
+                                <h3>@product.Name</h3>
+                                <div class="item-actions">
+                                    <button class="btn-edit" @onclick="() => ShowEditDialog(product)" title="Edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="#381e72">
+                                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71
+                                                         7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959
+                                                         0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                                        </svg>
+                                    </button>
+                                    <button class="btn-delete" @onclick="() => DeleteProduct(product)" title="Delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 24 24" width="18" fill="#b3261e">
+                                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9
+                                                         2-2V7H6v12zm3.46-9.12 1.41-1.41L12
+                                                         10.59l1.12-1.12 1.41 1.41L13.41
+                                                         12l1.12 1.12-1.41 1.41L12 13.41l-1.12
+                                                         1.12-1.41-1.41L10.59 12l-1.13-1.12zM15.5
+                                                         4l-1-1h-5l-1 1H5v2h14V4z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="tag-container">
+                                <span class="tag @product.GetCategoryTag()">@product.Category</span>
+                                @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
+                                {
+                                    <span class="tag @product.GetStatusTagClass()">
+                                        @product.GetExpirationStatus()
+                                    </span>
+                                }
+                            </div>
+
+                            <p class="date">
+                                @if (product.DateType == DateType.Expiration)
+                                {
+                                    <text>Expires: @PageFunctionService.GetRelativeFutureDate(product.ExpDate)</text>
+                                }
+                                else
+                                {
+                                    <text>Goes bad: @PageFunctionService.GetRelativeFutureDate(product.ExpDate)</text>
+                                }
+                            </p>
+
+                            <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
+                            <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
                         </div>
-                    </div>
-
-                    <div class="tag-container">
-                        <span class="tag @product.GetCategoryTag()">@product.Category</span>
-                        @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
-                        {
-                            <span class="tag @product.GetStatusTagClass()">
-                                @product.GetExpirationStatus()
-                            </span>
-                        }
-                    </div>
-
-                    <p class="date">
-                        @if (product.DateType == DateType.Expiration)
-                        {
-                            <text>Expires: @PageFunctionService.GetRelativeFutureDate(product.ExpDate)</text>
-                        }
-                        else
-                        {
-                            <text>Goes bad: @PageFunctionService.GetRelativeFutureDate(product.ExpDate)</text>
-                        }
-                    </p>
-
-                    <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
-                    <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
+                    }
                 </div>
             }
-        </div>
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">📦</div>
+                    <h2>Your Pantry is Empty</h2>
+                    <p>Add your first product to get started tracking expiration dates!</p>
+                    <button class="btn-primary" @onclick="ShowAddDialog">
+                        + Add Your First Product
+                    </button>
+                </div>
+            }
+        }
     </div>
 
     @* Add/Edit Product Dialog *@
@@ -163,6 +201,8 @@ else
     private bool showDialog = false;
     private bool showDeleteConfirm = false;
     private bool isEditing = false;
+    private bool isLoading = true;
+    private string? errorMessage;
     private Product currentProduct = new Product("", "", DateTime.Now.AddDays(7), DateType.BestBefore);
     private Product? productToDelete = null;
 
@@ -171,22 +211,49 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        if (!AuthStateProvider.IsAuthenticated)
+        try
         {
-            Navigation.NavigateTo("/pin-auth", true);
-            return;
-        }
+            if (!AuthStateProvider.IsAuthenticated)
+            {
+                Navigation.NavigateTo("/pin-auth", true);
+                return;
+            }
 
-        await ProductService.InitializeAsync();
-        await NotificationService.InitializeAsync();
-        await NotificationService.CheckAndScheduleNotificationsAsync();
-        await LoadProducts();
+            await ProductService.InitializeAsync();
+            await NotificationService.InitializeAsync();
+            await NotificationService.CheckAndScheduleNotificationsAsync();
+            await LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to initialize the application. Please try again.";
+            Console.WriteLine($"Initialization error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task LoadProducts()
     {
-        products = await ProductService.GetProductsAsync();
-        StateHasChanged();
+        isLoading = true;
+        errorMessage = null;
+        StateHasChanged(); // Force UI update to show loading state
+
+        try
+        {
+            products = await ProductService.GetProductsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load products: {ex.Message}";
+            Console.WriteLine($"LoadProducts error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private void ShowAddDialog()
@@ -223,9 +290,17 @@ else
         if (!string.IsNullOrWhiteSpace(currentProduct.Name) &&
             !string.IsNullOrWhiteSpace(currentProduct.Category))
         {
-            await ProductService.SaveProductAsync(currentProduct);
-            await LoadProducts();
-            CloseDialog();
+            try
+            {
+                await ProductService.SaveProductAsync(currentProduct);
+                await LoadProducts();
+                CloseDialog();
+            }
+            catch (Exception ex)
+            {
+                // Could show a toast or inline error here
+                Console.WriteLine($"SaveProduct error: {ex.Message}");
+            }
         }
     }
 
@@ -245,9 +320,17 @@ else
     {
         if (productToDelete != null)
         {
-            await ProductService.DeleteProductAsync(productToDelete);
-            await LoadProducts();
-            CloseDeleteConfirm();
+            try
+            {
+                await ProductService.DeleteProductAsync(productToDelete);
+                await LoadProducts();
+                CloseDeleteConfirm();
+            }
+            catch (Exception ex)
+            {
+                // Could show a toast or inline error here
+                Console.WriteLine($"ConfirmDelete error: {ex.Message}");
+            }
         }
     }
 

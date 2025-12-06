@@ -5,91 +5,159 @@
 @inject PageFunctionServices PageFunctionService
 
 <div class="container">
-
-    <h2>Expired / Expiring</h2>
-    <div class="grid">
-        @foreach (var product in expiredExpiringProducts)
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>Loading products...</p>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="error-message">
+            <span class="error-icon">⚠️</span>
+            <p>@errorMessage</p>
+            <button class="btn-retry" @onclick="LoadProducts">Retry</button>
+        </div>
+    }
+    else
+    {
+        @if (expiredExpiringProducts.Any())
         {
-            <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
-                <div class="grid-item-header">
-                    <h3>@product.Name</h3>
-                </div>
+            <h2>Expired / Expiring <span class="badge">@expiredExpiringProducts.Count</span></h2>
+            <div class="grid">
+                @foreach (var product in expiredExpiringProducts)
+                {
+                    <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
+                        <div class="grid-item-header">
+                            <h3>@product.Name</h3>
+                        </div>
 
-                <div class="tag-container">
-                    <span class="tag @product.GetCategoryTag()">@product.Category</span>
-                    @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
-                    {
-                        <span class="tag @product.GetStatusTagClass()">
-                            @product.GetExpirationStatus()
-                        </span>
-                    }
-                </div>
+                        <div class="tag-container">
+                            <span class="tag @product.GetCategoryTag()">@product.Category</span>
+                            @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
+                            {
+                                <span class="tag @product.GetStatusTagClass()">
+                                    @product.GetExpirationStatus()
+                                </span>
+                            }
+                        </div>
 
-                <p class="date">
-                    @(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ")
-                    @PageFunctionService.GetRelativeFutureDate(product.ExpDate)
-                </p>
-                <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
-                <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
+                        <p class="date">
+                            @(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ")
+                            @PageFunctionService.GetRelativeFutureDate(product.ExpDate)
+                        </p>
+                        <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
+                        <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
+                    </div>
+                }
             </div>
         }
-    </div>
-
-    <h2>Bad / Going Bad</h2>
-    <div class="grid">
-        @foreach (var product in badGoingBadProducts)
+        else
         {
-            <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
-                <div class="grid-item-header">
-                    <h3>@product.Name</h3>
-                </div>
-
-                <div class="tag-container">
-                    <span class="tag @product.GetCategoryTag()">@product.Category</span>
-                    @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
-                    {
-                        <span class="tag @product.GetStatusTagClass()">
-                            @product.GetExpirationStatus()
-                        </span>
-                    }
-                </div>
-
-                <p class="date">
-                    @(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ")
-                    @PageFunctionService.GetRelativeFutureDate(product.ExpDate)
-                </p>
-                <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
-                <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
+            <div class="empty-state">
+                <div class="empty-state-icon">🎉</div>
+                <h2>No Expired or Expiring Items</h2>
+                <p>All your products are fresh and up to date!</p>
             </div>
         }
-    </div>
 
+        <div class="section-divider"></div>
+
+        @if (badGoingBadProducts.Any())
+        {
+            <h2>Bad / Going Bad <span class="badge">@badGoingBadProducts.Count</span></h2>
+            <div class="grid">
+                @foreach (var product in badGoingBadProducts)
+                {
+                    <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
+                        <div class="grid-item-header">
+                            <h3>@product.Name</h3>
+                        </div>
+
+                        <div class="tag-container">
+                            <span class="tag @product.GetCategoryTag()">@product.Category</span>
+                            @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
+                            {
+                                <span class="tag @product.GetStatusTagClass()">
+                                    @product.GetExpirationStatus()
+                                </span>
+                            }
+                        </div>
+
+                        <p class="date">
+                            @(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ")
+                            @PageFunctionService.GetRelativeFutureDate(product.ExpDate)
+                        </p>
+                        <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
+                        <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">👍</div>
+                <h2>No Bad or Going Bad Items</h2>
+                <p>Your products are in good condition!</p>
+            </div>
+        }
+    }
 </div>
 
 @code {
     private List<Product> expiredExpiringProducts = new();
     private List<Product> badGoingBadProducts = new();
+    private bool isLoading = true;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await ProductService.InitializeAsync();
-        await LoadProducts();
+        try
+        {
+            await ProductService.InitializeAsync();
+            await LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to initialize the product service. Please try again later.";
+            Console.WriteLine($"Initialization error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task LoadProducts()
     {
-        var allProducts = await ProductService.GetProductsAsync();
+        isLoading = true;
+        errorMessage = null;
+        StateHasChanged(); // Force UI update to show loading state
 
-        expiredExpiringProducts = allProducts
-            .Where(p => p.GetExpirationStatus() == "Expired" || p.GetExpirationStatus() == "Expiring Soon")
-            .OrderBy(p => p.GetExpirationStatus() == "Expired" ? 0 : 1) // Expired first
-            .ToList();
+        try
+        {
+            var allProducts = await ProductService.GetProductsAsync();
 
-        badGoingBadProducts = allProducts
-            .Where(p => p.GetExpirationStatus() == "Bad" || p.GetExpirationStatus() == "Going Bad")
-            .OrderBy(p => p.GetExpirationStatus() == "Bad" ? 0 : 1) // Bad first
-            .ToList();
+            expiredExpiringProducts = allProducts
+                .Where(p => p.GetExpirationStatus() == "Expired" || p.GetExpirationStatus() == "Expiring Soon")
+                .OrderBy(p => p.GetExpirationStatus() == "Expired" ? 0 : 1) // Expired first
+                .ToList();
 
-        StateHasChanged();
+            badGoingBadProducts = allProducts
+                .Where(p => p.GetExpirationStatus() == "Bad" || p.GetExpirationStatus() == "Going Bad")
+                .OrderBy(p => p.GetExpirationStatus() == "Bad" ? 0 : 1) // Bad first
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load products: {ex.Message}";
+            Console.WriteLine($"LoadProducts error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 }

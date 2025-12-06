@@ -9,50 +9,114 @@
 <div class="container">
     <h2>Search Products</h2>
 
-    <div class="search-bar">
-        <input type="text"
-               placeholder="Search by name or category..."
-               @bind="SearchQuery"
-               @bind:event="oninput" />
-    </div>
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>Loading products...</p>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="error-message">
+            <span class="error-icon">⚠️</span>
+            <p>@errorMessage</p>
+            <button class="btn-retry" @onclick="LoadProducts">Retry</button>
+        </div>
+    }
+    else
+    {
+        <div class="search-bar">
+            <input type="text"
+                   placeholder="Search by name or category..."
+                   @bind="SearchQuery"
+                   @bind:event="oninput" />
+        </div>
 
-    <div class="sort-bar">
-        <select @onchange="OnSortChanged">
-            <option value="">Sort By...</option>
-            <option value="NameAZ">Name (A-Z)</option>
-            <option value="NameZA">Name (Z-A)</option>
-            <option value="CategoryAZ">Category (A-Z)</option>
-            <option value="CategoryZA">Category (Z-A)</option>
-            <option value="ExpirationStatus">Expiration Status</option>
-        </select>
-    </div>
+        <div class="sort-bar">
+            <select @onchange="OnSortChanged">
+                <option value="">Sort By...</option>
+                <option value="NameAZ">Name (A-Z)</option>
+                <option value="NameZA">Name (Z-A)</option>
+                <option value="CategoryAZ">Category (A-Z)</option>
+                <option value="CategoryZA">Category (Z-A)</option>
+                <option value="ExpirationStatus">Expiration Status</option>
+            </select>
+        </div>
 
-    <div class="grid">
+        @if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            <div class="search-results-header">
+                <span class="search-query">"@SearchQuery"</span>
+                <span class="results-count">@filteredProducts.Count result@(filteredProducts.Count != 1 ? "s" : "")</span>
+            </div>
+        }
+
         @if (filteredProducts.Any())
         {
-            @foreach (var product in filteredProducts)
-            {
-                <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
-                    <h3>@product.Name</h3>
-                    <p>Category: @product.Category</p>
-                    <p>
-                        @(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ")
-                        @PageFunctionService.GetRelativeFutureDate(product.ExpDate)
-                    </p>
+            <div class="grid">
+                @foreach (var product in filteredProducts)
+                {
+                    <div class="grid-item @PageFunctionService.GetHighlightClass(product)">
+                        <div class="grid-item-header">
+                            <h3>@product.Name</h3>
+                        </div>
+
+                        <div class="tag-container">
+                            <span class="tag @product.GetCategoryTag()">@product.Category</span>
+                            @if (!string.IsNullOrEmpty(product.GetExpirationStatus()))
+                            {
+                                <span class="tag @product.GetStatusTagClass()">
+                                    @product.GetExpirationStatus()
+                                </span>
+                            }
+                        </div>
+
+                        <p class="date">
+                            @(product.DateType == DateType.Expiration ? "Expires: " : "Goes bad: ")
+                            @PageFunctionService.GetRelativeFutureDate(product.ExpDate)
+                        </p>
+                        <p class="date">Added: @PageFunctionService.GetRelativeDate(product.DateAdded)</p>
+                        <p class="date">Last modified: @PageFunctionService.GetRelativeDate(product.LastModified)</p>
+                    </div>
+                }
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            <div class="empty-search-state">
+                <div class="empty-search-icon">🔍</div>
+                <h3>No results found for "@SearchQuery"</h3>
+                <p>Try searching with different keywords or browse all products.</p>
+                <div class="search-tips">
+                    <h4>Search tips:</h4>
+                    <ul>
+                        <li>Check your spelling</li>
+                        <li>Try more general terms</li>
+                        <li>Search by category (e.g., "Dairy", "Frozen")</li>
+                    </ul>
                 </div>
-            }
+                <button class="btn-clear-search" @onclick="ClearSearch">Clear Search</button>
+            </div>
         }
         else
         {
-            <p>No products found.</p>
+            <div class="empty-state">
+                <div class="empty-state-icon">📦</div>
+                <h3>No Products Yet</h3>
+                <p>Add some products to your pantry first, then you can search for them here.</p>
+                <button class="btn-primary" @onclick="NavigateToHome">Go to Pantry</button>
+            </div>
         }
-    </div>
+    }
 </div>
 
 @code {
     private string searchQuery = string.Empty;
     private List<Product> products = new();
     private List<Product> filteredProducts = new();
+    private bool isLoading = true;
+    private string? errorMessage;
 
     private string SearchQuery
     {
@@ -66,9 +130,30 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await ProductService.InitializeAsync();
-        products = await ProductService.GetProductsAsync();
-        filteredProducts = products.ToList();
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        isLoading = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            await ProductService.InitializeAsync();
+            products = await ProductService.GetProductsAsync();
+            filteredProducts = products.ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load products: {ex.Message}";
+            Console.WriteLine($"Search page error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private void FilterProducts()
@@ -85,6 +170,17 @@
                             p.Category.ToLower().Contains(query))
                 .ToList();
         }
+        StateHasChanged();
+    }
+
+    private void ClearSearch()
+    {
+        SearchQuery = string.Empty;
+    }
+
+    private void NavigateToHome()
+    {
+        Navigation.NavigateTo("/");
     }
 
     private async Task OnSortChanged(ChangeEventArgs e)
